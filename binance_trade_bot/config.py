@@ -16,18 +16,21 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
     PRICE_TYPE_ORDERBOOK = "orderbook"
     PRICE_TYPE_TICKER = "ticker"
 
+    RATIO_CALC_DEFAULT = "default"
+    RATIO_CALC_SCOUT_MARGIN = "scout_margin"
+
     def __init__(self):
         # Init config
         config = configparser.ConfigParser()
         config["DEFAULT"] = {
-            "bridge": "USDT", 
-            "use_margin": "true",
+            "bridge": "USDT",
             "scout_multiplier": "5",
             "scout_margin": "0.8",
             "scout_sleep_time": "5",
             "hourToKeepScoutHistory": "1",
             "tld": "com",
             "trade_fee": "auto",
+            "strategy": "default",
             "enable_paper_trading": "false",
             "sell_timeout": "0",
             "buy_timeout": "0",
@@ -36,7 +39,10 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
             "sell_max_price_change": "0.005",
             "buy_max_price_change": "0.005",
             "price_type": self.PRICE_TYPE_ORDERBOOK,
+            "ratio_calc": "default",
             "accept_losses": "false",
+            "max_idle_hours": "3",
+            "ratio_adjust_weight": "100",
             "auto_adjust_bnb_balance": "false",
             "auto_adjust_bnb_balance_rate": "3",
             "allow_coin_merge": "true"
@@ -90,7 +96,8 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
 
         self.STRATEGY = os.environ.get("STRATEGY") or config.get(USER_CFG_SECTION, "strategy")
 
-        enable_paper_trading_str = os.environ.get("ENABLE_PAPER_TRADING") or config.get(USER_CFG_SECTION, "enable_paper_trading")
+        enable_paper_trading_str = os.environ.get("ENABLE_PAPER_TRADING") or config.get(USER_CFG_SECTION,
+                                                                                        "enable_paper_trading")
         self.ENABLE_PAPER_TRADING = enable_paper_trading_str == "true" or enable_paper_trading_str == "True"
 
         self.SELL_TIMEOUT = os.environ.get("SELL_TIMEOUT") or config.get(USER_CFG_SECTION, "sell_timeout")
@@ -111,7 +118,8 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
             )
         self.SELL_ORDER_TYPE = order_type_map[sell_order_type]
 
-        self.SELL_MAX_PRICE_CHANGE = os.environ.get("SELL_MAX_PRICE_CHANGE") or config.get(USER_CFG_SECTION, "sell_max_price_change")
+        self.SELL_MAX_PRICE_CHANGE = os.environ.get("SELL_MAX_PRICE_CHANGE") or config.get(USER_CFG_SECTION,
+                                                                                           "sell_max_price_change")
 
         buy_order_type = os.environ.get("BUY_ORDER_TYPE") or config.get(
             USER_CFG_SECTION, "buy_order_type", fallback=self.ORDER_TYPE_LIMIT
@@ -128,7 +136,8 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
             )
         self.BUY_ORDER_TYPE = order_type_map[buy_order_type]
 
-        self.BUY_MAX_PRICE_CHANGE = os.environ.get("BUY_MAX_PRICE_CHANGE") or config.get(USER_CFG_SECTION, "buy_max_price_change")
+        self.BUY_MAX_PRICE_CHANGE = os.environ.get("BUY_MAX_PRICE_CHANGE") or config.get(USER_CFG_SECTION,
+                                                                                         "buy_max_price_change")
 
         price_types = {
             self.PRICE_TYPE_ORDERBOOK,
@@ -139,19 +148,22 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
             USER_CFG_SECTION, "price_type", fallback=self.PRICE_TYPE_ORDERBOOK
         )
         if price_type not in price_types:
-            raise Exception(f"{self.PRICE_TYPE_ORDERBOOK} or {self.PRICE_TYPE_TICKER} expected, got {price_type} for price_type")
+            raise Exception(
+                f"{self.PRICE_TYPE_ORDERBOOK} or {self.PRICE_TYPE_TICKER} expected, got {price_type} for price_type")
         self.PRICE_TYPE = price_type
-        
-        
 
         accept_losses_str = os.environ.get("ACCEPT_LOSSES") or config.get(USER_CFG_SECTION, "accept_losses")
         self.ACCEPT_LOSSES = str(accept_losses_str).lower() == 'true'
 
-        auto_adjust_bnb_balance_str = os.environ.get("AUTO_ADJUST_BNB_BALANCE") or config.get(USER_CFG_SECTION, "auto_adjust_bnb_balance")
+        self.MAX_IDLE_HOURS = os.environ.get("MAX_IDLE_HOURS") or config.get(USER_CFG_SECTION, "max_idle_hours")
+
+        auto_adjust_bnb_balance_str = os.environ.get("AUTO_ADJUST_BNB_BALANCE") or config.get(USER_CFG_SECTION,
+                                                                                              "auto_adjust_bnb_balance")
         self.AUTO_ADJUST_BNB_BALANCE = str(auto_adjust_bnb_balance_str).lower() == "true"
 
         self.AUTO_ADJUST_BNB_BALANCE_RATE = float(
-            os.environ.get("AUTO_ADJUST_BNB_BALANCE_RATE") or config.get(USER_CFG_SECTION, "auto_adjust_bnb_balance_rate")
+            os.environ.get("AUTO_ADJUST_BNB_BALANCE_RATE") or config.get(USER_CFG_SECTION,
+                                                                         "auto_adjust_bnb_balance_rate")
         )
 
         allow_coin_merge = os.environ.get("ALLOW_COIN_MERGE") or config.get(USER_CFG_SECTION, "allow_coin_merge")
